@@ -54,6 +54,9 @@ public class Job {
     @Column(name = "modified_time", nullable = false)
     private ZonedDateTime modifiedTime;
 
+    @Column(name = "image_id")
+    private long imageId;
+
 
     public long getId() {
         return id;
@@ -182,5 +185,8 @@ public class Job {
     public void setModifiedTime(ZonedDateTime modifiedTime) {
         this.modifiedTime = modifiedTime;
     }
+
+    public long getImageId() { return imageId; }
+    public void setImageId(long imageId) {this.imageId = imageId;}
 
 }

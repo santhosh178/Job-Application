@@ -1,8 +1,9 @@
 package com.example.firstproject.controller;
 
+import com.example.firstproject.dto.AddressDTO;
 import com.example.firstproject.dto.AddressRequest;
 import com.example.firstproject.dto.ApiResponse;
-import com.example.firstproject.entity.Address;
+import com.example.firstproject.service.AddressDetailsService;
 import com.example.firstproject.service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,12 @@ public class AddressController {
     @Autowired
     private AddressService addressService;
 
+    @Autowired
+    private AddressDetailsService addressDetailsService;
+
     @PostMapping("/add_address")
     public ResponseEntity<?> addAddress(@RequestHeader("Authorization") String token,@RequestBody AddressRequest addressRequest) {
-        Address address = addressService.addAddress(token,addressRequest);
+        addressService.addAddress(token,addressRequest);
         return ResponseEntity.ok(new ApiResponse(true,"add Address success"));
     }
 
@@ -32,13 +36,14 @@ public class AddressController {
 
     @PostMapping("/update_address")
     public ResponseEntity<?> updateAddress(@RequestHeader("Authorization") String token,@RequestParam long addressId, @RequestBody AddressRequest addressRequest) {
-        Address address  = addressService.updateAddress(token,addressId, addressRequest);
+        addressService.updateAddress(token,addressId, addressRequest);
         return ResponseEntity.ok(new ApiResponse(true,"Address updated success"));
     }
 
     @GetMapping("/get_address")
-    public List<Address> getAddress(@RequestHeader("Authorization") String token) {
-        return addressService.getAddress(token);
+    public ResponseEntity<List<AddressDTO>> getAddress(@RequestHeader("Authorization") String token) {
+            List<AddressDTO> addressDTOList = addressDetailsService.findByUserId(token);
+            return ResponseEntity.ok(addressDTOList);
     }
 
 }

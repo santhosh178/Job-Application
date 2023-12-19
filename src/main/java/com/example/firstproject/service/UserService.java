@@ -1,9 +1,6 @@
 package com.example.firstproject.service;
 
-import com.example.firstproject.dto.LoginRequest;
-import com.example.firstproject.dto.Role;
-import com.example.firstproject.dto.SignupRequest;
-import com.example.firstproject.dto.UserStatus;
+import com.example.firstproject.dto.*;
 import com.example.firstproject.entity.Image;
 import com.example.firstproject.entity.User;
 import com.example.firstproject.exception.NotFoundException;
@@ -17,7 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +42,9 @@ public class UserService {
     @Autowired
     private CreditService creditService;
 
+    @Autowired
+    private ImageService imageService;
+
     public User signup(SignupRequest signupRequest) {
 
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
@@ -59,7 +61,6 @@ public class UserService {
         user.setAddedTime(ZonedDateTime.now());
         user.setModifiedTime(ZonedDateTime.now());
         user.setRole(Role.USER.toString());
-
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         User users = userRepository.save(user);
@@ -95,17 +96,15 @@ public class UserService {
             }
             if (signupRequest.getPassword() != null) {
                 existinguser.setPassword(signupRequest.getPassword());
+                existinguser.setPassword(passwordEncoder.encode(existinguser.getPassword()));
             }
 
             existinguser.setModifiedTime(ZonedDateTime.now());
-            existinguser.setPassword(passwordEncoder.encode(existinguser.getPassword()));
-
             return userRepository.save(existinguser);
 
         } else {
             throw new NotFoundException("User id not match");
         }
-
     }
 
     public List<User> findAllUser(String token) {
@@ -128,30 +127,25 @@ public class UserService {
     }
 
 
-    public User updateImageInUser(String token, long imageId) {
+    public User updateImageInUser(String token, MultipartFile file) throws IOException {
         Long userId = tokenProvider.extractUserId(token);
         Optional<User> user = userRepository.findById(userId);
-        Image image = imageRepository.findById(imageId).orElseThrow(() -> new NotFoundException("User id not match"));
+        Image imageId = imageService.saveImage(token, file.getOriginalFilename(), file.getBytes());
 
         if (user.isPresent()) {
             User existingUser = user.get();
 
-            if (imageId != 0L) {
-                existingUser.setImageId(image.getId());
-            } else {
-                throw new NotFoundException("Image id not match");
+            if(imageId.getId() != 0L){
+                existingUser.setImageId(imageId.getId());
+            }
+            else {
+                throw new NotFoundException("no image added");
             }
             return userRepository.save(existingUser);
         }
         else {
             throw new NotFoundException("User id not match");
         }
-    }
-
-    public User extractUserId(String token) {
-        Long userId = tokenProvider.extractUserId(token);
-        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User id not match"));
-        return user;
     }
 
     public User changeRole(String token) {

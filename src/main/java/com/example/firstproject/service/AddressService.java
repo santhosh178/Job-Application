@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -107,12 +106,6 @@ public class AddressService {
         } else {
             throw new NotFoundException("Address id not match");
         }
-
-    }
-
-    public List<Address> getAddress(String token) {
-        Long userId = tokenProvider.extractUserId(token);
-        return addressRepository.findByUserId(userId);
     }
 
 }

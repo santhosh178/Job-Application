@@ -8,5 +8,7 @@ import java.util.List;
 
 @Repository
 public interface RechargeRepository extends JpaRepository<Recharge,Long> {
+
     List<Recharge> findByUserId(long userId);
+
 }

@@ -1,7 +1,6 @@
 package com.example.firstproject.service;
 
 import com.example.firstproject.config.AppProperties;
-import com.example.firstproject.dto.JobRequest;
 import com.example.firstproject.dto.JobStatus;
 import com.example.firstproject.entity.*;
 import com.example.firstproject.exception.NotFoundException;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -39,19 +37,29 @@ public class JobService {
     @Autowired
     private TokenProvider tokenProvider;
 
+    @Autowired
+    private ImageRepository imageRepository;
+
+    @Autowired
+    private ImageService imageService;
+
     private AppProperties appProperties;
 
     public JobService(AppProperties appProperties) {
         this.appProperties = appProperties;
     }
 
-    public Job addJob(String token,JobRequest jobRequest) {
+
+    public Job addJob(String token,String jobDescription,long category_id,long address_id,String mode,long payment, String jobTime, String imageName, byte[] imageData) {
         Long userId = tokenProvider.extractUserId(token);
         User user = userRepository.findById(userId).orElseThrow(()->new NotFoundException("User id not match"));
-        Address address = addressRepository.findById(jobRequest.getAddress_id()).orElseThrow(()->new NotFoundException("Address id not match"));
-        Category category = categoryRepository.findById(jobRequest.getCategory_id()).orElseThrow(()->new NotFoundException("Category id not match"));
+        Address address = addressRepository.findById(address_id).orElseThrow(()->new NotFoundException("Address id not match"));
+        Category category = categoryRepository.findById(category_id).orElseThrow(()->new NotFoundException("Category id not match"));
 
-        String inputString = jobRequest.getJobTime();
+        Image imageId = imageService.saveImage(token,imageName,imageData);
+
+
+        String inputString = jobTime;
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         LocalDateTime localDateTime = LocalDateTime.parse(inputString, formatter);
@@ -78,24 +86,20 @@ public class JobService {
         }
 
         Job job = new Job();
-        job.setJobDescription(jobRequest.getJobDescription());
+        job.setJobDescription(jobDescription);
         job.setUser(user);
         job.setAddress(address);
         job.setCategory(category);
         job.setCreditForCreate(appProperties.getCredits().getCreditForCreate());
-        job.setMode(jobRequest.getMode());
+        job.setMode(mode);
         job.setJobTime(zonedDateTime);
-        job.setPayment(jobRequest.getPayment());
+        job.setPayment(payment);
         job.setStatus(JobStatus.open.toString());
         job.setModifiedTime(ZonedDateTime.now());
         job.setAddedTime(ZonedDateTime.now());
+        job.setImageId(imageId.getId());
 
         return jobRepository.save(job);
-    }
-
-    public List<Job> getJobDetails(String token) {
-        Long userId = tokenProvider.extractUserId(token);
-        return jobRepository.findByUserId(userId);
     }
 
     public Job updateJob(long jobId, String token) {
@@ -104,38 +108,39 @@ public class JobService {
         User user = userRepository.findById(user_Id).orElseThrow(()->new NotFoundException("User id not match"));
 
         if(job.isPresent()) {
+
             Job updateJobAssigner = job.get();
+            if(user.getId() != updateJobAssigner.getUser().getId()){
+                long credit = appProperties.getCredits().getCreditForAssigner();
 
-            long credit = appProperties.getCredits().getCreditForAssigner();
+                Optional<Object> userId = creditRepository.findByUserId(user.getId());
 
-            Optional<Object> userId = creditRepository.findByUserId(user.getId());
-
-            if (userId.isPresent()) {
-                Credit existCredit = (Credit) userId.get();
-                if(existCredit.getCredit()>0) {
-                    creditService.updateMinusCredit(user.getId(),credit);
+                if (userId.isPresent()) {
+                    Credit existCredit = (Credit) userId.get();
+                    if(existCredit.getCredit()>0) {
+                        creditService.updateMinusCredit(user.getId(),credit);
+                    }
+                    else {
+                        throw  new NotFoundException("you have not enough credit balance");
+                    }
                 }
                 else {
-                    throw  new NotFoundException("you have not enough credit balance");
+                    throw new NotFoundException("User id not match");
                 }
+                updateJobAssigner.setAssigner(user);
+                updateJobAssigner.setCreditForPick(appProperties.getCredits().getCreditForAssigner());
+                updateJobAssigner.setAssignerTime(ZonedDateTime.now());
+                updateJobAssigner.setStatus(JobStatus.working.toString());
+                updateJobAssigner.setModifiedTime(ZonedDateTime.now());
+                return jobRepository.save(updateJobAssigner);
             }
             else {
-                throw new NotFoundException("User id not match");
+                throw new NotFoundException("Your are the job added no pick the job");
             }
-            updateJobAssigner.setAssigner(user);
-            updateJobAssigner.setCreditForPick(appProperties.getCredits().getCreditForAssigner());
-            updateJobAssigner.setAssignerTime(ZonedDateTime.now());
-            updateJobAssigner.setStatus(JobStatus.working.toString());
-            updateJobAssigner.setModifiedTime(ZonedDateTime.now());
-            return jobRepository.save(updateJobAssigner);
         }
         else {
             throw new NotFoundException("Job id not match");
         }
-    }
-
-    public List<Job> findAllJobs() {
-      return jobRepository.findAll();
     }
 
     public Job addClosingTime(long jobId,String token) {

@@ -18,7 +18,7 @@ public class RechargeController {
 
     @PostMapping("/add_recharge")
     public ResponseEntity<?> uploadRecharge(@RequestHeader("Authorization") String token,@RequestParam long amount) {
-        Recharge recharge = rechargeService.addRecharge(token,amount);
+        rechargeService.addRecharge(token,amount);
         return ResponseEntity.ok(new ApiResponse(true,"add Recharge success"));
     }
 

@@ -1,6 +1,7 @@
 package com.example.firstproject.service;
 
 import com.example.firstproject.entity.Image;
+import com.example.firstproject.entity.User;
 import com.example.firstproject.exception.NotFoundException;
 import com.example.firstproject.repository.ImageRepository;
 import com.example.firstproject.repository.UserRepository;
@@ -25,7 +26,7 @@ public class ImageService {
     @Autowired
     private UserRepository userRepository;
 
-    public void saveImage(String token,String imageName, byte[] imageData) {
+    public Image saveImage(String token,String imageName, byte[] imageData) {
         Long userId = tokenProvider.extractUserId(token);
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User id not match"));
         if (imageRepository.existsByImageName(imageName)) {
@@ -38,7 +39,8 @@ public class ImageService {
         image.setAddedTime(ZonedDateTime.now());
         image.setModifiedTime(ZonedDateTime.now());
 
-        imageRepository.save(image);
+       return imageRepository.save(image);
+
     }
 
     public Optional<Image> getImageById(String token,long imageId) {
@@ -47,10 +49,10 @@ public class ImageService {
         return imageRepository.findById(imageId);
     }
 
-    public Image updateImage(String token,long imageId, MultipartFile file) throws IOException {
+    public Image updateImage(String token,MultipartFile file) throws IOException {
         Long userId = tokenProvider.extractUserId(token);
-        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User id not match"));
-        Image existingImage = imageRepository.findById(imageId).orElseThrow(() -> new NotFoundException("image id not match"));
+        User user =  userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User id not match"));
+        Image existingImage = imageRepository.findById(user.getImageId()).orElseThrow(() -> new NotFoundException("image id not match"));
 
         existingImage.setImageData(file.getBytes());
         existingImage.setImageName(file.getOriginalFilename());

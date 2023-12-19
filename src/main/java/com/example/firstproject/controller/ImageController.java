@@ -43,8 +43,8 @@ public class ImageController {
     }
 
     @PostMapping("/update_image")
-    public ResponseEntity<?> updateStudent(@RequestHeader("Authorization") String token,@RequestParam long imageId, @RequestBody MultipartFile file) throws IOException {
-        Image updated = imageService.updateImage(token,imageId, file);
+    public ResponseEntity<?> updateStudent(@RequestHeader("Authorization") String token,@RequestBody MultipartFile file) throws IOException {
+        imageService.updateImage(token, file);
         return ResponseEntity.ok(new ApiResponse(true,"image updated success"));
     }
 

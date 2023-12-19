@@ -18,7 +18,7 @@ public class CategoryController {
 
     @PostMapping("/add_category")
     private ResponseEntity<?> addCategory(@RequestHeader("Authorization") String token,@RequestParam String category ) {
-        Category newCategory = categoryService.addCategory(token,category);
+       categoryService.addCategory(token,category);
         return ResponseEntity.ok(new ApiResponse(true,"add category success"));
     }
 
@@ -30,7 +30,7 @@ public class CategoryController {
 
     @PostMapping("/update_category")
     private ResponseEntity<?> updateCategory(@RequestHeader("Authorization") String token,@RequestParam long categoryId, @RequestParam String category) {
-        Category updated = categoryService.updateCategory(token,categoryId, category);
+        categoryService.updateCategory(token,categoryId, category);
         return ResponseEntity.ok(new ApiResponse(true,"category updated success"));
     }
 

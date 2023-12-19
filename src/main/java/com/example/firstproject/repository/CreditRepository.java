@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface CreditRepository extends JpaRepository<Credit,Long> {
+
     Optional<Object> findByUserId(long userId);
 
-    boolean existsByUserId(long id);
 }
