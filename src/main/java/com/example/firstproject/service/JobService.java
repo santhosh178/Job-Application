@@ -56,9 +56,6 @@ public class JobService {
         Address address = addressRepository.findById(address_id).orElseThrow(()->new NotFoundException("Address id not match"));
         Category category = categoryRepository.findById(category_id).orElseThrow(()->new NotFoundException("Category id not match"));
 
-        Image imageId = imageService.saveImage(token,imageName,imageData);
-
-
         String inputString = jobTime;
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -66,7 +63,6 @@ public class JobService {
         ZoneId zoneId = ZoneId.systemDefault();
         ZoneOffset zoneOffset = zoneId.getRules().getOffset(localDateTime);
         ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(localDateTime, zoneOffset, zoneId);
-
 
         long credit = appProperties.getCredits().getCreditForCreate();
 
@@ -97,7 +93,10 @@ public class JobService {
         job.setStatus(JobStatus.open.toString());
         job.setModifiedTime(ZonedDateTime.now());
         job.setAddedTime(ZonedDateTime.now());
-        job.setImageId(imageId.getId());
+        if(imageData != null) {
+            Image imageId = imageService.saveImage(token,imageName,imageData);
+            job.setImageId(imageId.getId());
+        }
 
         return jobRepository.save(job);
     }

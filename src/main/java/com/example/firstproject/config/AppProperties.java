@@ -10,6 +10,8 @@ public class AppProperties {
 
     private final Credits credits = new Credits();
 
+    private final Limits limits = new Limits();
+
     public static class Auth {
         private String tokenSecret;
         private long tokenExpirationMsec;
@@ -63,6 +65,18 @@ public class AppProperties {
         }
     }
 
+    public static class Limits {
+        private long limit;
+
+        public long getLimit() {
+            return limit;
+        }
+
+        public void setLimit(long limit) {
+            this.limit = limit;
+        }
+    }
+
     public Auth getAuth() {
         return auth;
     }
@@ -71,4 +85,5 @@ public class AppProperties {
         return credits;
     }
 
+    public Limits getLimits() {return limits;}
 }

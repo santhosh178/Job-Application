@@ -104,14 +104,7 @@ public class CategoryService {
         Optional<User> user =userRepository.findById(userId);
 
         if(user.isPresent()) {
-            User existingUser = user.get();
-
-            if(Objects.equals(existingUser.getRole(), "ADMIN")) {
-                return categoryRepository.findAll();
-            }
-            else {
-                throw new NotFoundException("Admin only to access the category");
-            }
+            return categoryRepository.findAll();
         }
         else {
             throw new NotFoundException("User id not match");

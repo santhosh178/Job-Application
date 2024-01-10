@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/job")
@@ -23,12 +24,22 @@ public class JobController {
     private JobDetailsService jobDetailsService;
 
     @PostMapping("/add_job")
-    public ResponseEntity<?> addJob(@RequestHeader("Authorization") String token,@RequestParam("jobDescription") String jobDescription,
-                                    @RequestParam("category_id") long category_id,@RequestParam("address_id") long address_id,
-                                    @RequestParam("mode") String mode,@RequestParam("payment") long payment,@RequestParam("jobTime") String jobTime,
-                                    @RequestParam("file") MultipartFile file) throws IOException {
-        jobService.addJob(token,jobDescription,category_id,address_id,mode,payment,jobTime,file.getOriginalFilename(), file.getBytes());
-        return ResponseEntity.ok(new ApiResponse(true,"Job added successfully"));
+    public ResponseEntity<?> addJob(@RequestHeader("Authorization") String token,
+                                    @RequestParam("jobDescription") String jobDescription,
+                                    @RequestParam("category_id") long category_id,
+                                    @RequestParam("address_id") long address_id,
+                                    @RequestParam("mode") String mode,
+                                    @RequestParam("payment") long payment,
+                                    @RequestParam("jobTime") String jobTime,
+                                    @RequestParam(value = "file", required = false) Optional<MultipartFile> file) throws IOException {
+
+        if (file.isPresent()) {
+            jobService.addJob(token, jobDescription, category_id, address_id, mode, payment, jobTime, file.get().getOriginalFilename(), file.get().getBytes());
+        } else {
+            jobService.addJob(token, jobDescription, category_id, address_id, mode, payment, jobTime, null, null);
+        }
+
+        return ResponseEntity.ok(new ApiResponse(true, "Job added successfully"));
     }
 
     @PostMapping("/update_job_assigner")
@@ -38,15 +49,15 @@ public class JobController {
     }
 
     @GetMapping("/get_all_jobs")
-    public ResponseEntity<List<JobDTO>> getAllJobDetails(@RequestHeader("Authorization") String token, @RequestParam String status) {
-            List<JobDTO> jobDTOList = jobDetailsService.findByStatus(token,status);
-            return ResponseEntity.ok(jobDTOList);
+    public ResponseEntity<List<JobDTO>> getAllJobDetails(@RequestHeader("Authorization") String token, @RequestParam String status,@RequestParam Long lastJobId,@RequestParam Long limit) {
+        List<JobDTO> jobDTOList = jobDetailsService.findByStatus(token,status,lastJobId,limit);
+        return ResponseEntity.ok(jobDTOList);
     }
 
     @GetMapping("/get_user_jobs_details")
-    public ResponseEntity<List<JobDTO>> getUserJobDetails(@RequestHeader("Authorization") String token) {
-            List<JobDTO> jobDTOList = jobDetailsService.findByUserId(token);
-            return ResponseEntity.ok(jobDTOList);
+    public ResponseEntity<List<JobDTO>> getUserJobDetails(@RequestHeader("Authorization") String token,@RequestParam Long lastJobId,@RequestParam Long limit) {
+        List<JobDTO> jobDTOList = jobDetailsService.findByUserId(token,lastJobId,limit);
+        return ResponseEntity.ok(jobDTOList);
     }
 
     @PostMapping("/add_closing_time")

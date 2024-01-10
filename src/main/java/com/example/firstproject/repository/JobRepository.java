@@ -12,4 +12,7 @@ public interface JobRepository extends JpaRepository<Job,Long> {
 
     List<Job> findByUserId(Long userId);
 
+    List<Job> findByStatusAndIdGreaterThan(String status, Long lastJobId);
+
+    List<Job> findByIdGreaterThan(Long lastJobId);
 }
