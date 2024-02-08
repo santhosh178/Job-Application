@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -56,13 +57,20 @@ public class JobService {
         Address address = addressRepository.findById(address_id).orElseThrow(()->new NotFoundException("Address id not match"));
         Category category = categoryRepository.findById(category_id).orElseThrow(()->new NotFoundException("Category id not match"));
 
-        String inputString = jobTime;
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        LocalDateTime localDateTime = LocalDateTime.parse(inputString, formatter);
+        LocalDateTime localDateTime = LocalDateTime.parse(jobTime, formatter);
         ZoneId zoneId = ZoneId.systemDefault();
         ZoneOffset zoneOffset = zoneId.getRules().getOffset(localDateTime);
         ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(localDateTime, zoneOffset, zoneId);
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String dateString = now.format(pattern);
+        LocalDateTime localDateTimes = LocalDateTime.parse(dateString, pattern);
+        ZoneId zoneId1 = ZoneId.systemDefault();
+        ZoneOffset zoneOffset1 = zoneId1.getRules().getOffset(localDateTimes);
+        ZonedDateTime dateAndTime = ZonedDateTime.ofInstant(localDateTimes, zoneOffset1, zoneId1);
 
         long credit = appProperties.getCredits().getCreditForCreate();
 
@@ -91,8 +99,8 @@ public class JobService {
         job.setJobTime(zonedDateTime);
         job.setPayment(payment);
         job.setStatus(JobStatus.open.toString());
-        job.setModifiedTime(ZonedDateTime.now());
-        job.setAddedTime(ZonedDateTime.now());
+        job.setModifiedTime(dateAndTime);
+        job.setAddedTime(dateAndTime);
         if(imageData != null) {
             Image imageId = imageService.saveImage(token,imageName,imageData);
             job.setImageId(imageId.getId());
@@ -112,6 +120,15 @@ public class JobService {
             if(user.getId() != updateJobAssigner.getUser().getId()){
                 long credit = appProperties.getCredits().getCreditForAssigner();
 
+                ZonedDateTime now = ZonedDateTime.now();
+
+                DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String dateString = now.format(pattern);
+                LocalDateTime localDateTimes = LocalDateTime.parse(dateString, pattern);
+                ZoneId zoneId1 = ZoneId.systemDefault();
+                ZoneOffset zoneOffset1 = zoneId1.getRules().getOffset(localDateTimes);
+                ZonedDateTime modifiedTime = ZonedDateTime.ofInstant(localDateTimes, zoneOffset1, zoneId1);
+
                 Optional<Object> userId = creditRepository.findByUserId(user.getId());
 
                 if (userId.isPresent()) {
@@ -128,9 +145,9 @@ public class JobService {
                 }
                 updateJobAssigner.setAssigner(user);
                 updateJobAssigner.setCreditForPick(appProperties.getCredits().getCreditForAssigner());
-                updateJobAssigner.setAssignerTime(ZonedDateTime.now());
+                updateJobAssigner.setAssignerTime(modifiedTime);
                 updateJobAssigner.setStatus(JobStatus.working.toString());
-                updateJobAssigner.setModifiedTime(ZonedDateTime.now());
+                updateJobAssigner.setModifiedTime(modifiedTime);
                 return jobRepository.save(updateJobAssigner);
             }
             else {
@@ -150,9 +167,18 @@ public class JobService {
         if(job.isPresent()) {
             Job updateJobAssigner = job.get();
 
+            ZonedDateTime now = ZonedDateTime.now();
+
+            DateTimeFormatter pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String dateString = now.format(pattern);
+            LocalDateTime localDateTimes = LocalDateTime.parse(dateString, pattern);
+            ZoneId zoneId1 = ZoneId.systemDefault();
+            ZoneOffset zoneOffset1 = zoneId1.getRules().getOffset(localDateTimes);
+            ZonedDateTime modifiedTime = ZonedDateTime.ofInstant(localDateTimes, zoneOffset1, zoneId1);
+
             if(updateJobAssigner.getAssigner() == user) {
-                updateJobAssigner.setClosingTime(ZonedDateTime.now());
-                updateJobAssigner.setModifiedTime(ZonedDateTime.now());
+                updateJobAssigner.setClosingTime(modifiedTime);
+                updateJobAssigner.setModifiedTime(modifiedTime);
                 updateJobAssigner.setStatus(JobStatus.close.toString());
             }
             else {
@@ -165,4 +191,19 @@ public class JobService {
         }
     }
 
+    public List<Job> getEntitiesWithLastModifiedTime(int limit, ZonedDateTime lastModifiedTime) {
+        List<Job> entities = jobRepository.findByModifiedTimeGreaterThanOrderByModifiedTimeAsc(lastModifiedTime);
+
+        if (entities.size() > limit) {
+            return entities.subList(0, limit);
+        }
+        else {
+            return entities;
+        }
+    }
+
+    public Optional<Job> getJobIdDetails(long id) {
+        Optional<Job> jobDetails = jobRepository.findById(id);
+        return jobDetails;
+    }
 }
