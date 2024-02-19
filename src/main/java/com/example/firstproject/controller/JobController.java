@@ -73,9 +73,16 @@ public class JobController {
     }
 
     @GetMapping("/get_user_jobs_details")
-    public ResponseEntity<List<JobDTO>> getUserJobDetails(@RequestHeader("Authorization") String token,@RequestParam Long lastJobId,@RequestParam Long limit) {
-        List<JobDTO> jobDTOList = jobDetailsService.findByUserId(token,lastJobId,limit);
-        return ResponseEntity.ok(jobDTOList);
+    public ResponseEntity<List<JobDTO>> getUserJobDetails(@RequestHeader("Authorization") String token,@RequestParam(name = "lastModifiedTime", required = false) String lastModifiedTimeString,@RequestParam Long limit) {
+        if (lastModifiedTimeString == null) {
+            List<JobDTO> allJobs = jobDetailsService.findAllBeforeUserId(token, limit);
+            return ResponseEntity.ok(allJobs);
+        }
+        else {
+            ZonedDateTime lastModifiedTime = ZonedDateTime.parse(lastModifiedTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault()));
+            List<JobDTO> allJobs = jobDetailsService.findByUserIdDetails(token, lastModifiedTime, limit);
+            return ResponseEntity.ok(allJobs);
+        }
     }
 
     @PostMapping("/add_closing_time")
@@ -103,4 +110,9 @@ public class JobController {
         return ResponseEntity.ok(jobDetails);
     }
 
+    @GetMapping("/delete_job")
+    public ResponseEntity<?> deleteJob(@RequestHeader("Authorization") String token,@RequestParam long jobId) {
+        jobService.deleteJob(token,jobId);
+        return ResponseEntity.ok(new ApiResponse(true,"delete job success"));
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -206,4 +207,25 @@ public class JobService {
         Optional<Job> jobDetails = jobRepository.findById(id);
         return jobDetails;
     }
+
+
+    public void deleteJob(String token, long jobId) {
+        Long user_Id = tokenProvider.extractUserId(token);
+        User user = userRepository.findById(user_Id).orElseThrow(()->new NotFoundException("User id not match"));
+        Optional<Job> job = jobRepository.findById(jobId);
+
+        if(job.isPresent()) {
+            Job jobDetails = job.get();
+            if(jobDetails.getUser() == user) {
+                jobRepository.deleteById(jobDetails.getId());
+            }
+            else {
+                throw new NotFoundException("You are not authorized to delete this job");
+            }
+        }
+        else {
+            throw new NotFoundException("Job id not match");
+        }
+    }
+
 }

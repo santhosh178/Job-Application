@@ -33,54 +33,17 @@ public class JobDetailsServiceImpl implements JobDetailsService {
         this.appProperties = appProperties;
     }
 
-//    @Override
-//    public List<JobDTO> findByStatus(String token, String status, Long lastJobId,Long limit) {
-//        Long userId = tokenProvider.extractUserId(token);
-//        if (userId != 0L) {
-//            List<Job> job;
-//            long backendLimit = appProperties.getLimits().getLimit();
-//
-//            if (lastJobId != null) {
-//                job = jobRepository.findByStatusAndIdGreaterThan(status, lastJobId);
-//            } else {
-//                job = jobRepository.findByStatus(status);
-//            }
-//            if (lastJobId > backendLimit) {
-//                throw new NotFoundException("Backend limit exceeded");
-//            }
-//
-//            List<JobDTO> jobDTOs = job.stream()
-//                    .limit(limit)
-//                    .map(jobMapper::toJobDTO)
-//                    .collect(Collectors.toList());
-//
-//            return jobDTOs;
-//        } else {
-//            throw new NotFoundException("User id not match");
-//        }
-//    }
-
     @Override
     public List<JobDTO> findByStatus(String token, String status,ZonedDateTime lastModifiedTime,Long limit) {
         Long userId = tokenProvider.extractUserId(token);
         if (userId != 0L) {
             List<Job> job;
             long backendLimit = appProperties.getLimits().getLimit();
-
-//            if (lastModifiedTime != null) {
-////                job = jobRepository.findByStatusAndIdGreaterThan(status, lastModifiedTime);
-//            } else {
                 job = jobRepository.findByStatus(status);
-//            }
-//            if (lastModifiedTime > backendLimit) {
-//                throw new NotFoundException("Backend limit exceeded");
-//            }
-//
             List<JobDTO> jobDTOs = job.stream()
                     .limit(limit)
                     .map(jobMapper::toJobDTO)
                     .collect(Collectors.toList());
-
             return jobDTOs;
         } else {
             throw new NotFoundException("User id not match");
@@ -115,14 +78,36 @@ public class JobDetailsServiceImpl implements JobDetailsService {
         Long userId = tokenProvider.extractUserId(token);
         if (userId != 0L) {
             List<Job> jobs;
-//            if (lastModifiedTime != null) {
-                jobs = jobRepository.findAllByModifiedTimeLessThanOrderByModifiedTimeDesc(lastModifiedTime);
-//            } else {
-//                throw new NotFoundException("last id not match");
-//            }
+            jobs = jobRepository.findAllByModifiedTimeLessThanOrderByModifiedTimeDesc(lastModifiedTime);
             return jobs.stream().map(jobMapper::toJobDTO).limit(limit).collect(Collectors.toList());
         } else {
             throw new NotFoundException("User id not match");
+        }
+    }
+
+    @Override
+    public List<JobDTO> findByUserIdDetails(String token, ZonedDateTime lastModifiedTime, Long limit) {
+        Long userId = tokenProvider.extractUserId(token);
+        if (userId != 0L) {
+            List<Job> jobs;
+            jobs = jobRepository.findByUserIdAndModifiedTimeLessThanOrderByModifiedTimeDesc(userId, lastModifiedTime);
+            return jobs.stream().map(jobMapper::toJobDTO).limit(limit).collect(Collectors.toList());
+        } else {
+            throw new NotFoundException("User id not match");
+        }
+    }
+
+    @Override
+    public List<JobDTO> findAllBeforeUserId(String token, Long limit) {
+        Long userId = tokenProvider.extractUserId(token);
+
+        if (userId != 0L) {
+            List<Job> jobs;
+            jobs = jobRepository.findByUserIdOrderByModifiedTimeDesc(userId);
+            return jobs.stream().map(jobMapper::toJobDTO).limit(limit).collect(Collectors.toList());
+        }
+         else {
+            throw new IllegalArgumentException("User id cannot be null");
         }
     }
 

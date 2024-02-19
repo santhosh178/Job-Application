@@ -13,21 +13,16 @@ public interface JobRepository extends JpaRepository<Job,Long> {
 
     List<Job> findByUserId(Long userId);
 
-    List<Job> findByStatusAndIdGreaterThan(String status, Long lastJobId);
-
     List<Job> findByUserIdAndIdGreaterThanOrderByUserId(Long userId, Long lastJobId);
-
-    List<Job> findAllByOrderByIdDesc();
-
-    List<Job> findAllByIdLessThanOrderByIdDesc(Long lastJobId);
 
     List<Job> findByModifiedTimeGreaterThanOrderByModifiedTimeAsc(ZonedDateTime lastModifiedTime);
 
     List<Job> findAllByOrderByModifiedTimeDesc();
 
-    List<Job> findAllByIdLessThanOrderByModifiedTimeDesc(Long lastJobId);
-
     List<Job> findAllByModifiedTimeLessThanOrderByModifiedTimeDesc(ZonedDateTime lastModifiedTime);
 
-//    List<Job> findAllByModifiedTimeLessThanOrderByModifiedTimeDesc(Long lastJobId);
+    List<Job> findByUserIdOrderByModifiedTimeDesc(Long userId);
+
+    List<Job> findByUserIdAndModifiedTimeLessThanOrderByModifiedTimeDesc(Long userId, ZonedDateTime lastModifiedTime);
+
 }

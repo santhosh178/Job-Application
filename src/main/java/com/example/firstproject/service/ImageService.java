@@ -29,9 +29,6 @@ public class ImageService {
     public Image saveImage(String token,String imageName, byte[] imageData) {
         Long userId = tokenProvider.extractUserId(token);
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User id not match"));
-        if (imageRepository.existsByImageName(imageName)) {
-            throw new NotFoundException("Image already uploaded.");
-        }
 
         Image image = new Image();
         image.setImageName(imageName);
