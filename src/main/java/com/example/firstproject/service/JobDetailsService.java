@@ -17,6 +17,9 @@ public interface JobDetailsService {
 
     List<JobDTO> findByUserIdDetails(String token, ZonedDateTime lastModifiedTime, Long limit);
 
+    List<JobDTO> findByAssignerIdDetails(String token, ZonedDateTime lastModifiedTime, Long limit);
+
     List<JobDTO> findAllBeforeUserId(String token, Long limit);
 
+    List<JobDTO> findAllBeforeAssignerId(String token, Long limit);
 }

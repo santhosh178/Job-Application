@@ -228,4 +228,27 @@ public class JobService {
         }
     }
 
+    public List<Job> getEntitiesWithLastModifiedTimeAndId(String token,int limit, ZonedDateTime lastModifiedTime) {
+        Long user_Id = tokenProvider.extractUserId(token);
+        List<Job> entities = jobRepository.findByUserIdAndModifiedTimeGreaterThanOrderByModifiedTimeAsc(user_Id,lastModifiedTime);
+
+        if (entities.size() > limit) {
+            return entities.subList(0, limit);
+        }
+        else {
+            return entities;
+        }
+    }
+
+    public List<Job> getEntitiesWithLastModifiedTimeAndAssignerId(String token, int limit, ZonedDateTime lastModifiedTime) {
+        Long assigner_Id = tokenProvider.extractUserId(token);
+        List<Job> entities = jobRepository.findByAssignerIdAndModifiedTimeGreaterThanOrderByModifiedTimeAsc(assigner_Id,lastModifiedTime);
+
+        if (entities.size() > limit) {
+            return entities.subList(0, limit);
+        }
+        else {
+            return entities;
+        }
+    }
 }

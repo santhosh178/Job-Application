@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -98,6 +99,18 @@ public class JobDetailsServiceImpl implements JobDetailsService {
     }
 
     @Override
+    public List<JobDTO> findByAssignerIdDetails(String token, ZonedDateTime lastModifiedTime, Long limit) {
+        Long assignerId = tokenProvider.extractUserId(token);
+        if (assignerId != 0L) {
+            List<Job> jobs;
+            jobs = jobRepository.findByAssignerIdAndModifiedTimeLessThanOrderByModifiedTimeDesc(assignerId, lastModifiedTime);
+            return jobs.stream().map(jobMapper::toJobDTO).limit(limit).collect(Collectors.toList());
+        } else {
+            throw new NotFoundException("User id not match");
+        }
+    }
+
+    @Override
     public List<JobDTO> findAllBeforeUserId(String token, Long limit) {
         Long userId = tokenProvider.extractUserId(token);
 
@@ -108,6 +121,20 @@ public class JobDetailsServiceImpl implements JobDetailsService {
         }
          else {
             throw new IllegalArgumentException("User id cannot be null");
+        }
+    }
+
+    @Override
+    public List<JobDTO> findAllBeforeAssignerId(String token, Long limit) {
+        Long assignerId = tokenProvider.extractUserId(token);
+
+        if (assignerId != 0L) {
+            List<Job> jobs;
+            jobs = jobRepository.findByAssignerIdOrderByModifiedTimeDesc(assignerId);
+            return jobs.stream().map(jobMapper::toJobDTO).limit(limit).collect(Collectors.toList());
+        }
+        else {
+            throw new IllegalArgumentException("Assigner id cannot be null");
         }
     }
 

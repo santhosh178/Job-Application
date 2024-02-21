@@ -85,6 +85,19 @@ public class JobController {
         }
     }
 
+    @GetMapping("/get_assigner_jobs_details")
+    public ResponseEntity<List<JobDTO>> getAssignerJobDetails(@RequestHeader("Authorization") String token,@RequestParam(name = "lastModifiedTime", required = false) String lastModifiedTimeString,@RequestParam Long limit) {
+        if (lastModifiedTimeString == null) {
+            List<JobDTO> allJobs = jobDetailsService.findAllBeforeAssignerId(token, limit);
+            return ResponseEntity.ok(allJobs);
+        }
+        else {
+            ZonedDateTime lastModifiedTime = ZonedDateTime.parse(lastModifiedTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault()));
+            List<JobDTO> allJobs = jobDetailsService.findByAssignerIdDetails(token, lastModifiedTime, limit);
+            return ResponseEntity.ok(allJobs);
+        }
+    }
+
     @PostMapping("/add_closing_time")
     public ResponseEntity<?> addClosingTime(@RequestHeader("Authorization") String token,@RequestParam long jobId) {
         jobService.addClosingTime(jobId,token);
@@ -102,6 +115,31 @@ public class JobController {
                         .withZone(ZoneId.systemDefault())
         );
         return jobService.getEntitiesWithLastModifiedTime(limit, lastModifiedTime);
+    }
+    @GetMapping("/last_modified_time_by_userid")
+    public List<Job> getIdModifiedTime(@RequestHeader("Authorization") String token,
+            @RequestParam(name = "limit") int limit,
+            @RequestParam(name = "lastModifiedTime", required = false) String lastModifiedTimeString
+    ) {
+        ZonedDateTime lastModifiedTime = ZonedDateTime.parse(
+                lastModifiedTimeString,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                        .withZone(ZoneId.systemDefault())
+        );
+        return jobService.getEntitiesWithLastModifiedTimeAndId(token,limit, lastModifiedTime);
+    }
+
+    @GetMapping("/last_modified_time_by_assigner_id")
+    public List<Job> getAssignedIdModifiedTime(@RequestHeader("Authorization") String token,
+                                       @RequestParam(name = "limit") int limit,
+                                       @RequestParam(name = "lastModifiedTime", required = false) String lastModifiedTimeString
+    ) {
+        ZonedDateTime lastModifiedTime = ZonedDateTime.parse(
+                lastModifiedTimeString,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                        .withZone(ZoneId.systemDefault())
+        );
+        return jobService.getEntitiesWithLastModifiedTimeAndAssignerId(token,limit, lastModifiedTime);
     }
 
     @GetMapping("/get_job_id_details")
